@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotating Cube</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+    let scene, camera, renderer;
+    let cube;
+    let selectedFace = null;
+
+    function init() {
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const geometry = new THREE.BoxGeometry();
+        const materials = [];
+        for (let i = 0; i < 6; i++) {
+            materials.push(new THREE.MeshBasicMaterial({ color: Math.random() * 0xffffff }));
+        }
+
+        cube = new THREE.Mesh(geometry, materials);
+        scene.add(cube);
+
+        camera.position.z = 5;
+
+        document.addEventListener('mousedown', onDocumentMouseDown, false);
+        window.addEventListener('resize', onWindowResize, false);
+    }
+
+    function onDocumentMouseDown(event) {
+        event.preventDefault();
+
+        const mouse = new THREE.Vector2();
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, camera);
+
+        const intersects = raycaster.intersectObjects(scene.children, true);
+        if (intersects.length > 0) {
+            selectedFace = intersects[0].faceIndex;
+        } else {
+            selectedFace = null;
+        }
+    }
+
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        cube.rotation.x += 0.01;
+        cube.rotation.y += 0.01;
+
+        if (selectedFace !== null) {
+            // Update the material color of the selected face
+            const material = cube.material[selectedFace];
+            material.color.setHSL(material.color.getHSL().h + 0.01, material.color.getHSL().s, material.color.getHSL().l);
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    init();
+    animate();
+</script>
+</body>
+</html>
+
+
